@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AriyaBot Security Robot Guide</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        h1 {
+            text-align: center;
+        }
+        ul {
+            list-style-type: disc;
+            padding-left: 20px;
+        }
+        pre {
+            background-color: #eee;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .note {
+            background-color: #fff3cd;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>AriyaBot Security Robot Guide</h1>
+
+    <h2>Complete Description of the Robot’s Functionality</h2>
+    <p>This robot is a GUI-based security tool designed for penetration testing and vulnerability detection on Kali Linux. It leverages security tools like <code>nmap</code>, <code>curl</code>, <code>openssl</code>, and artificial intelligence (DeepSeek from OpenRouter) to assist users in automating security tests, filtering results, and receiving suggestions for subsequent tests. The primary goal is to streamline the penetration testing process and provide a user-friendly experience.</p>
+
+    <h3>Main Features:</h3>
+    <ul>
+        <li><strong>Dependency Check and Installation</strong>: At startup, the robot checks for the presence of system tools (e.g., <code>nmap</code>, <code>openssl</code>) and Python libraries (e.g., <code>openai</code>). If any are missing, it prompts the user for permission to install them automatically.</li>
+        <li><strong>Execution of Security Tests</strong>: Users can manually input test commands or load them from a <code>commands.txt</code> file. Tests are executed in parallel, with results displayed in a filtered format.</li>
+        <li><strong>AI-Powered Result Analysis</strong>: Using the DeepSeek API, test results are analyzed, and new test suggestions are provided. Tests can be run with or without AI analysis.</li>
+        <li><strong>Output Filtering</strong>: The robot processes output from each tool (e.g., <code>nmap</code>, <code>curl</code>, <code>openssl</code>) with dedicated filters to show only relevant and critical information.</li>
+        <li><strong>Loading and Editing Commands from a File</strong>: Predefined commands can be loaded from <code>commands.txt</code>. The placeholder <code>example.com</code> in these commands is replaced with a user-provided link (e.g., <code>http://checksw.com</code>). Users can edit the <code>commands.txt</code> file using their default text editor.</li>
+        <li><strong>Prompt Management</strong>: Users can define and save custom AI prompts, stored in <code>prompts.json</code>, and select them at startup.</li>
+        <li><strong>Interactive User Interface</strong>: Features buttons for starting/stopping tests, copying/pasting results, and status indicators (e.g., number of pending/completed tests). Includes indicators for internet connectivity and CDN filtering.</li>
+    </ul>
+
+    <h3>Workflow Structure:</h3>
+    <ul>
+        <li><strong>Start</strong>: Begins with a sudo password prompt and dependency check.</li>
+        <li><strong>User Input</strong>: Users input domains, rules, or test commands, or load from a file.</li>
+        <li><strong>Execution</strong>: Tests run in parallel, with filtered results displayed.</li>
+        <li><strong>Analysis and Suggestions</strong>: In AI mode, results are analyzed, and new tests are suggested.</li>
+        <li><strong>Storage</strong>: Results are saved in <code>results.json</code>.</li>
+    </ul>
+
+    <h2>User Guide</h2>
+    <h3>What Does the Robot Do?</h3>
+    <p>This robot helps you perform security tests on domains or systems. You can manually enter test commands or use a pre-prepared file. It executes, filters, and analyzes results, and with AI, suggests new tests. It’s ideal for ethical hackers, penetration testers, and anyone checking system security.</p>
+
+    <h3>Prerequisites:</h3>
+    <ul>
+        <li><strong>Operating System</strong>: Kali Linux (or similar Linux distribution).</li>
+        <li><strong>Tools</strong>: Security tools like <code>nmap</code>, <code>curl</code>, <code>openssl</code> must be installed (the robot can install them if needed).</li>
+        <li><strong>API Key</strong>: An OpenRouter API key for DeepSeek AI (entered in a <code>.env</code> file).</li>
+        <li><strong>Commands File</strong>: A <code>commands.txt</code> file for pre-defined commands (optional).</li>
+    </ul>
+
+    <h3>How to Use the Robot:</h3>
+    <ol>
+        <li><strong>Initial Setup</strong>:
+            <p>Run the robot. It will prompt for your sudo password (needed for root-level commands). If tools or libraries are missing, it will ask for permission to install them. Select "Yes" to proceed.</p>
+        </li>
+        <li><strong>Prompt Selection (Optional)</strong>:
+            <p>At startup, a window lets you choose an AI prompt. Select "Default" or create a custom one.</p>
+        </li>
+        <li><strong>Entering a Link and Loading Commands</strong>:
+            <p>In the "Enter Link" field, type your target link (e.g., <code>http://checksw.com</code>). Click "Load Commands". The robot loads commands from <code>commands.txt</code> and replaces <code>example.com</code> with your link. Modified commands appear in the "RESULT (Modified Commands)" field, e.g.:</p>
+            <pre>
+openssl s_client -connect http://checksw.com:443
+openssl s_client -connect http://checksw.com:443 -tls1
+openssl s_client -connect http://checksw.com:443 -ssl3
+            </pre>
+        </li>
+        <li><strong>Editing the Commands File (Optional)</strong>:
+            <p>Click "Edit Commands File" to open <code>commands.txt</code> in your default editor (e.g., <code>gedit</code>). Add or modify commands (e.g., <code>openssl s_client -connect example.com:443 -tls1_2</code>), then save.</p>
+        </li>
+        <li><strong>Transferring Commands to the Test Field</strong>:
+            <p>Copy the commands from the "RESULT" field (right-click or <code>Ctrl+C</code>). Paste them into the "Domain/Rules/Tests" field (<code>Ctrl+V</code>).</p>
+        </li>
+        <li><strong>Running Tests</strong>:
+            <p>Click "Start Tests (AI)" to run tests with AI analysis. Click "Run Tests Without AI" to run without AI. Test progress is shown in the progress bar and "Tests pending"/"Tests completed" labels.</p>
+        </li>
+        <li><strong>Viewing and Managing Results</strong>:
+            <p>Results appear in the "Results" field, including filtered output, AI analysis (if enabled), and next test suggestions. Use "Copy Results" to copy results and "Paste Clipboard" to paste commands from the clipboard. "Add Suggested Tests" adds AI suggestions to the test field.</p>
+        </li>
+        <li><strong>Stopping Tests</strong>:
+            <p>Click "Stop Tests" to halt running tests.</p>
+        </li>
+        <li><strong>Re-Analyzing Previous Results</strong>:
+            <p>Click "Analyze with AI" to re-analyze existing results with AI.</p>
+        </li>
+        <li><strong>Editing Prompts (Optional)</strong>:
+            <p>Click "Edit Prompt", modify the prompt, name it, and save.</p>
+        </li>
+    </ol>
+
+    <h3>Request to Users:</h3>
+    <p>We invite you to test this robot and evaluate its performance. Please report any weaknesses or issues you encounter while using it. Additionally, we’d love to hear your suggestions for improving its functionality, adding new features, or enhancing the user experience. Your feedback will help us make the robot better and more useful!</p>
+
+    <h3>Important Notes:</h3>
+    <div class="note">
+        <ul>
+            <li><strong>Commands File</strong>: If <code>commands.txt</code> doesn’t exist, create it next to the script with commands like the example above.</li>
+            <li><strong>Internet Connection</strong>: Required for AI and some tools (e.g., <code>curl</code>). The "Internet" indicator shows connectivity status.</li>
+            <li><strong>CDN Filter</strong>: Turns red if CDN indicators (e.g., Cloudflare) are detected in the output.</li>
+            <li><strong>Storage</strong>: Results are saved in <code>results.json</code> for later review.</li>
+        </ul>
+    </div>
+
+    <h3>Simple Example:</h3>
+    <ul>
+        <li><strong>User Input</strong>: <code>http://checksw.com</code> in the link field.</li>
+        <li><strong><code>commands.txt</code></strong>:
+            <pre>openssl s_client -connect example.com:443</pre>
+        </li>
+        <li><strong>Output in RESULT</strong>:
+            <pre>openssl s_client -connect http://checksw.com:443</pre>
+        </li>
+        <li><strong>Action</strong>: Copy to the test field, then click "Start Tests (AI)".</li>
+    </ul>
+</body>
+</html>

